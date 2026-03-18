@@ -9,10 +9,13 @@ import org.telegram.telegrambots.longpolling.util.LongPollingSingleThreadUpdateC
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.message.Message;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+import ru.javaops.ai_bot.ai.CourseAdvertiser;
 import ru.javaops.ai_bot.handler.ClientHandler;
 import ru.javaops.ai_bot.handler.CommandHandler;
 import ru.javaops.ai_bot.handler.KeyboardHandler;
 import ru.javaops.ai_bot.handler.UpdateHandler;
+
+import java.io.IOException;
 
 import static ru.javaops.ai_bot.AIBot.Stage.HANDLE_BASE_PROGRAM_QUESTION;
 import static ru.javaops.ai_bot.AIBot.Stage.HANDLE_BASE_TEST_QUESTION;
@@ -35,10 +38,14 @@ public class AIBot implements LongPollingSingleThreadUpdateConsumer {
 
     private static final String CHOOSE_DIRECTION_MSG = "Выберите направление обучения";
 
-    @Value("${BOT_HTTP_API_TOKEN}")
+    @Value("${ai-bot.telegram.token}")
     @Getter
-    String token;
+    private String token;
 
+    @Value("${ai-bot.yandex-cloud.gateway}")
+    private String yandexCloudGateway;
+
+    protected CourseAdvertiser courseAdvertiser;
     protected ClientHandler clientHandler;
     protected final States<Stage> states = new States<>();
 
@@ -54,6 +61,7 @@ public class AIBot implements LongPollingSingleThreadUpdateConsumer {
     @PostConstruct
     public void init() {
         clientHandler = new ClientHandler(token);
+        courseAdvertiser = new CourseAdvertiser(yandexCloudGateway);
     }
 
     @Override
@@ -120,7 +128,13 @@ public class AIBot implements LongPollingSingleThreadUpdateConsumer {
     }
 
     private void finish(long tgId, String course) {
-        clientHandler.sendMd(tgId, "Посмотрите на курс " + course);
+        try {
+            courseAdvertiser.advertise(tgId, course);
+        } catch (IOException ex) {
+            log.error(ex.getMessage());
+            // fallback to simple recommendation without AI service usage
+            clientHandler.sendMd(tgId, "Посмотрите на курс " + course);
+        }
         states.invalidate(tgId);
     }
 }
