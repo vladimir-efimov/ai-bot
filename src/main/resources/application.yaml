@@ -1,0 +1,5 @@
+ai-bot:
+  telegram:
+    token: ${BOT_HTTP_API_TOKEN}
+  yandex-cloud:
+    gateway: ${YANDEX_CLOUD_GATEWAY}
