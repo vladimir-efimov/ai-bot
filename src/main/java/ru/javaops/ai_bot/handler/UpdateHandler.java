@@ -18,21 +18,27 @@ import static ru.javaops.ai_bot.handler.KeyboardHandler.createInlineButton;
 @UtilityClass
 public class UpdateHandler {
 
-    public static final String YES = "yes";
-    public static final String NO = "no";
+    public static final String YES = "да";
+    public static final String NO = "нет";
     public static final InlineKeyboardMarkup YES_NO_KEYBOARD = KeyboardHandler.createSingleRowMarkup(
-            createInlineButton("Yes", YES),
-            createInlineButton("No", NO));
+            createInlineButton("Да", YES),
+            createInlineButton("Нет", NO));
 
     public static Message getMessage(Update upd) {
         return upd.hasMessage() ? upd.getMessage() : upd.getEditedMessage();
     }
 
     public static void treatNoAndYes(Update update, Runnable treatNo, Runnable treatYes) {
+        treat2OptionsQuestion(update, treatNo, treatYes, NO);
+    }
+
+    public static void treat2OptionsQuestion(Update update, Runnable treatMainline, Runnable treatAlternative,
+                                            String mainlineOption) {
         String cbData = getDataFromCallbackQuery(update);
-        switch (cbData) {
-            case NO -> treatNo.run();
-            case YES -> treatYes.run();
+        if (cbData.equals(mainlineOption)) {
+            treatMainline.run();
+        } else {
+            treatAlternative.run();
         }
     }
 
