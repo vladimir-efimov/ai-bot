@@ -1,12 +1,16 @@
 package ru.javaops.ai_bot;
 
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
 import org.telegram.telegrambots.longpolling.TelegramBotsLongPollingApplication;
 
 import java.util.Objects;
 
-@Slf4j
+import static org.slf4j.LoggerFactory.getLogger;
+
 public class AIBotMain {
+
+    private static final Logger log = getLogger(AIBotMain.class);
+
     public static void main(String[] args) throws Exception {
         String botToken = Objects.requireNonNull(System.getenv("BOT_HTTP_API_TOKEN"), "Set BOT_HTTP_API_TOKEN environment variable"); //"BOT_HTTP_API_Token";
         // https://rubenlagus.github.io/TelegramBotsDocumentation/getting-started.html

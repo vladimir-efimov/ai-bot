@@ -1,7 +1,5 @@
 package ru.javaops.ai_bot.handler;
 
-import lombok.NonNull;
-import lombok.experimental.UtilityClass;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.MessageEntity;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -15,8 +13,9 @@ import java.util.List;
 
 import static ru.javaops.ai_bot.handler.KeyboardHandler.createInlineButton;
 
-@UtilityClass
 public class UpdateHandler {
+
+    private UpdateHandler() {}
 
     public static final String YES = "yes";
     public static final String NO = "no";
@@ -36,7 +35,6 @@ public class UpdateHandler {
         }
     }
 
-    @NonNull
     public static String getDataFromCallbackQuery(Update upd) {
         CallbackQuery callbackQuery = Util.notNull(upd.getCallbackQuery(), "update has no CallbackQuery");
         return Util.notNull(callbackQuery.getData(), "callbackQuery has no Date");

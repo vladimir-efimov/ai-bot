@@ -1,14 +1,15 @@
 package ru.javaops.ai_bot.handler;
 
-import lombok.experimental.UtilityClass;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow;
 
 import java.util.List;
 
-@UtilityClass
 public class KeyboardHandler {
+
+    private KeyboardHandler() {}
+
     public static InlineKeyboardButton createInlineButton(String text, String callbackData) {
         return InlineKeyboardButton.builder()
                 .text(text)

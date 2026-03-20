@@ -1,21 +1,23 @@
 package ru.javaops.ai_bot;
 
-import lombok.extern.slf4j.Slf4j;
 import org.telegram.telegrambots.longpolling.util.LongPollingSingleThreadUpdateConsumer;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.message.Message;
+import org.slf4j.Logger;
 import ru.javaops.ai_bot.handler.ClientHandler;
 import ru.javaops.ai_bot.handler.CommandHandler;
 import ru.javaops.ai_bot.handler.UpdateHandler;
 
+import static org.slf4j.LoggerFactory.getLogger;
 import static ru.javaops.ai_bot.AIBot.Stage.HANDLE_BASE_PROGRAM_QUESTION;
 import static ru.javaops.ai_bot.AIBot.Stage.HANDLE_BASE_TEST_QUESTION;
 import static ru.javaops.ai_bot.AIBot.Stage.HANDLE_SYNTAX_QUESTION;
 import static ru.javaops.ai_bot.AIBot.Stage.HANDLE_TOP_PROGRAM_QUESTION;
 import static ru.javaops.ai_bot.AIBot.Stage.HANDLE_TOP_TEST_QUESTION;
 
-@Slf4j
 public class AIBot implements LongPollingSingleThreadUpdateConsumer {
+
+    private static final Logger log = getLogger(AIBot.class);
 
     private static final String START_JAVA_COURSE = "Java for beginners: [StartJava](https://javaops.ru/view/startjava?ref=aibot)";
     private static final String BASE_JAVA_COURSE = "Web Java Developer: [BaseJava](https://javaops.ru/view/basejava?ref=aibot)";

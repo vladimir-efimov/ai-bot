@@ -1,6 +1,6 @@
 package ru.javaops.ai_bot.handler;
 
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
 import org.telegram.telegrambots.client.jetty.JettyTelegramClient;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard;
@@ -10,8 +10,11 @@ import ru.javaops.ai_bot.error.TelegramException;
 
 import java.util.function.Consumer;
 
-@Slf4j
+import static org.slf4j.LoggerFactory.getLogger;
+
 public class ClientHandler {
+
+    private static final Logger log = getLogger(ClientHandler.class);
     private final TelegramClient telegramClient;
 
     public ClientHandler(String token) {
