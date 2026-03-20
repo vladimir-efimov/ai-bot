@@ -3,9 +3,11 @@ package ru.javaops.ai_bot;
 import org.telegram.telegrambots.longpolling.util.LongPollingSingleThreadUpdateConsumer;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.message.Message;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.slf4j.Logger;
 import ru.javaops.ai_bot.handler.ClientHandler;
 import ru.javaops.ai_bot.handler.CommandHandler;
+import ru.javaops.ai_bot.handler.KeyboardHandler;
 import ru.javaops.ai_bot.handler.UpdateHandler;
 
 import static org.slf4j.LoggerFactory.getLogger;
@@ -14,19 +16,20 @@ import static ru.javaops.ai_bot.AIBot.Stage.HANDLE_BASE_TEST_QUESTION;
 import static ru.javaops.ai_bot.AIBot.Stage.HANDLE_SYNTAX_QUESTION;
 import static ru.javaops.ai_bot.AIBot.Stage.HANDLE_TOP_PROGRAM_QUESTION;
 import static ru.javaops.ai_bot.AIBot.Stage.HANDLE_TOP_TEST_QUESTION;
+import static ru.javaops.ai_bot.handler.KeyboardHandler.createInlineButton;
 
 public class AIBot implements LongPollingSingleThreadUpdateConsumer {
 
     private static final Logger log = getLogger(AIBot.class);
 
-    private static final String START_JAVA_COURSE = "Java for beginners: [StartJava](https://javaops.ru/view/startjava?ref=aibot)";
-    private static final String BASE_JAVA_COURSE = "Web Java Developer: [BaseJava](https://javaops.ru/view/basejava?ref=aibot)";
-    private static final String TOP_JAVA_COURSE = "Enterprise Java Developer: [TopJava](https://javaops.ru/view/topjava?ref=aibot)";
-    private static final String CLOUD_JAVA_COURSE = """
-        [Middle to Senior courses](https://javaops.ru/#senior?ref=aibot).
-        Main are [Microservices, Kafka, Docker, Spring Cloud, reactive stack](https://javaops.ru/view/cloudjava?ref=aibot)
-        and [Deploy microservices to Kubernetes. Helm](https://javaops.ru/view/cloudjava2?ref=aibot)
-        """;
+    private static final String START_JAVA_COURSE = "Java для начинающих: [StartJava](https://javaops.ru/view/startjava?ref=aibot)";
+    private static final String BASE_JAVA_COURSE = "Web Java разработчик: [BaseJava](https://javaops.ru/view/basejava?ref=aibot)";
+    private static final String AI_BOT_COURSE = "Telegram бот курс: [AI-Bot](https://javaops.ru/view/ai-bot?ref=aibot)";
+    private static final String TOP_JAVA_COURSE = "Enterprise Java разработчик: [TopJava](https://javaops.ru/view/topjava?ref=aibot)";
+    private static final String CLOUD_JAVA_COURSE = "Курс для уровней Middle и Senior: [CloudJava](https://javaops.ru/view/cloudjava?ref=aibot)";
+    private static final String DEV_OPS_COURSE = "Dev Ops курс: [Deploy microservices to Kubernetes. Helm](https://javaops.ru/view/cloudjava2?ref=aibot)";
+
+    private static final String CHOOSE_DIRECTION_MSG = "Выберите направление обучения";
 
     protected final ClientHandler clientHandler;
     protected final States<Stage> states = new States<>();
@@ -35,8 +38,8 @@ public class AIBot implements LongPollingSingleThreadUpdateConsumer {
         HANDLE_SYNTAX_QUESTION,
         HANDLE_BASE_PROGRAM_QUESTION,
         HANDLE_BASE_TEST_QUESTION,
-        HANDLE_TOP_PROGRAM_QUESTION,
-        HANDLE_TOP_TEST_QUESTION;
+        HANDLE_TOP_TEST_QUESTION,
+        HANDLE_TOP_PROGRAM_QUESTION
     }
 
     public AIBot(String botToken) {
@@ -51,45 +54,44 @@ public class AIBot implements LongPollingSingleThreadUpdateConsumer {
         Message msg = UpdateHandler.getMessage(update);
         if (CommandHandler.isHelp(msg)) {
             clientHandler.sendMd(tgId, """
-                We wish you success in career with Java! Have a look at
-                💥 [JavaOPs Roadmap](https://javaops.ru/view/roadmap?ref=aibot)
-                💥 [Тест на знание Java, общий и по темам](https://t.me/JavaOPsTestBot)
-                💥 [Материалы для подготовки](https://javaops.ru/view/test?ref=aibot)
-                """);
+                    Успехов в обучении и карьере Java разработчика! Посмотрите на
+                    💥 [JavaOPs план обучения](https://javaops.ru/view/roadmap?ref=aibot)
+                    💥 [Тест на знание Java, общий и по темам](https://t.me/JavaOPsTestBot)
+                    💥 [Материалы для подготовки](https://javaops.ru/view/test?ref=aibot)
+                    """);
         } else if (CommandHandler.isStart(msg) || state == null) {
             sendYesNo(tgId, """
-                Take short test for right Java course for you.
-                Do you know Java syntax?
-                """, HANDLE_SYNTAX_QUESTION);
+                    Пройдите короткий тест для определения подходящего Вам курса.
+                    Вы знаете синтаксис Java?
+                    """, HANDLE_SYNTAX_QUESTION);
         } else {
             switch (state) {
                 case HANDLE_SYNTAX_QUESTION -> UpdateHandler.treatNoAndYes(update,
-                    () -> finish(tgId, START_JAVA_COURSE),
-                    () -> sendYesNo(tgId, "Do you know Java Core, JDBC and Servlets?\nAre you aware of [BaseJava program](https://javaops.ru/view/basejava#program)?",
-                        HANDLE_BASE_PROGRAM_QUESTION)
+                        () -> finish(tgId, START_JAVA_COURSE),
+                        () -> sendChooseDirectionQuestion(tgId, "Java Web / enterprise", "AI и чат-боты",
+                                HANDLE_BASE_PROGRAM_QUESTION)
                 );
-                case HANDLE_BASE_PROGRAM_QUESTION -> UpdateHandler.treatNoAndYes(update,
-                    () -> sendYesNo(tgId, """
-                            Try first Java Web developer course lesson and test task:
-                             [Homework HW1](https://github.com/JavaOPs/basejava/blob/master/lesson/lesson1.md#домашнее-задание-hw1). Can you handle it?""",
-                        HANDLE_BASE_TEST_QUESTION),
-                    () -> sendYesNo(tgId, "Do you know Maven, Spring, JPA, REST?\nAre you aware of [TopJava program](https://javaops.ru/view/topjava#schedule)?",
-                        HANDLE_TOP_PROGRAM_QUESTION)
+                case HANDLE_BASE_PROGRAM_QUESTION -> UpdateHandler.treat2OptionsQuestion(update,
+                        () -> sendYesNo(tgId, "Вы знаете Java Core, JDBC и Servlets?\nВы проходили [BaseJava program](https://javaops.ru/view/basejava#program)?",
+                                HANDLE_BASE_TEST_QUESTION),
+                        () -> finish(tgId, AI_BOT_COURSE),
+                        "Java Web / enterprise"
                 );
                 case HANDLE_BASE_TEST_QUESTION -> UpdateHandler.treatNoAndYes(update,
-                    () -> finish(tgId, START_JAVA_COURSE),
-                    () -> finish(tgId, BASE_JAVA_COURSE)
+                        () -> finish(tgId, BASE_JAVA_COURSE),
+                        () -> sendYesNo(tgId, "Вы знаете Maven, Spring, JPA, REST?\nВы проходили [TopJava program](https://javaops.ru/view/topjava#schedule)?",
+                                HANDLE_TOP_TEST_QUESTION)
                 );
-                case HANDLE_TOP_PROGRAM_QUESTION -> UpdateHandler.treatNoAndYes(update,
-                    () -> sendYesNo(tgId,
-                        """
-                            Try introductory Java Enterprise developer course lesson and
-                            [Homework HW0](https://github.com/JavaOPs/topjava#-домашнее-задание-hw0). Can you handle it?""",
-                        HANDLE_TOP_TEST_QUESTION),
-                    () -> finish(tgId, CLOUD_JAVA_COURSE));
                 case HANDLE_TOP_TEST_QUESTION -> UpdateHandler.treatNoAndYes(update,
-                    () -> finish(tgId, BASE_JAVA_COURSE),
-                    () -> finish(tgId, TOP_JAVA_COURSE));
+                        () -> finish(tgId, TOP_JAVA_COURSE),
+                        () -> sendChooseDirectionQuestion(tgId, "Java enterprise", "DevOps",
+                                HANDLE_TOP_PROGRAM_QUESTION)
+                );
+                case HANDLE_TOP_PROGRAM_QUESTION -> UpdateHandler.treat2OptionsQuestion(update,
+                        () -> finish(tgId, CLOUD_JAVA_COURSE),
+                        () -> finish(tgId, DEV_OPS_COURSE),
+                        "Java enterprise"
+                );
             }
         }
     }
@@ -99,8 +101,16 @@ public class AIBot implements LongPollingSingleThreadUpdateConsumer {
         states.update(tgId, nextStage);
     }
 
+    private void sendChooseDirectionQuestion(long tgId, String option1, String option2, Stage nextStage) {
+        InlineKeyboardMarkup directionKeys = KeyboardHandler.createSingleRowMarkup(
+                createInlineButton(option1, option1),
+                createInlineButton(option2, option2));
+        clientHandler.sendMdAndKeyboard(tgId, CHOOSE_DIRECTION_MSG, directionKeys);
+        states.update(tgId, nextStage);
+    }
+
     private void finish(long tgId, String course) {
-        clientHandler.sendMd(tgId, "Have a look at " + course);
+        clientHandler.sendMd(tgId, "Посмотрите на курс " + course);
         states.invalidate(tgId);
     }
 }
