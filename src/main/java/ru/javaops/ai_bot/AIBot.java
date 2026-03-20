@@ -5,10 +5,13 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.message.Message;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.slf4j.Logger;
+import ru.javaops.ai_bot.ai.CourseAdvertiser;
 import ru.javaops.ai_bot.handler.ClientHandler;
 import ru.javaops.ai_bot.handler.CommandHandler;
 import ru.javaops.ai_bot.handler.KeyboardHandler;
 import ru.javaops.ai_bot.handler.UpdateHandler;
+
+import java.io.IOException;
 
 import static org.slf4j.LoggerFactory.getLogger;
 import static ru.javaops.ai_bot.AIBot.Stage.HANDLE_BASE_PROGRAM_QUESTION;
@@ -32,6 +35,7 @@ public class AIBot implements LongPollingSingleThreadUpdateConsumer {
     private static final String CHOOSE_DIRECTION_MSG = "Выберите направление обучения";
 
     protected final ClientHandler clientHandler;
+    protected final CourseAdvertiser courseAdvertiser;
     protected final States<Stage> states = new States<>();
 
     public enum Stage {
@@ -42,8 +46,9 @@ public class AIBot implements LongPollingSingleThreadUpdateConsumer {
         HANDLE_TOP_PROGRAM_QUESTION
     }
 
-    public AIBot(String botToken) {
+    public AIBot(String botToken, String apiGatewayAddress) {
         clientHandler = new ClientHandler(botToken);
+        courseAdvertiser = new CourseAdvertiser(apiGatewayAddress);
     }
 
     @Override
@@ -110,7 +115,13 @@ public class AIBot implements LongPollingSingleThreadUpdateConsumer {
     }
 
     private void finish(long tgId, String course) {
-        clientHandler.sendMd(tgId, "Посмотрите на курс " + course);
+        try {
+            courseAdvertiser.advertise(tgId, course);
+        } catch (IOException ex) {
+            log.error(ex.getMessage());
+            // fallback to simple recommendation without AI service usage
+            clientHandler.sendMd(tgId, "Посмотрите на курс " + course);
+        }
         states.invalidate(tgId);
     }
 }
